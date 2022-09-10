@@ -9,10 +9,12 @@ variables:
   # PipelinesPersonalAccessToken: define in Azure 
   # TriggeredBy: define in Azure set to an empty string
 
+lockBehavior: sequential
 stages:
 - stage: Stage
   jobs:
-    - job: Job
+    - deployment: Job
+      environment: Exclusive_locks
 
       steps:
       - task: colinsalmcorner.colinsalmcorner-buildtasks.tag-build-task.tagBuildOrRelease@0
@@ -25,18 +27,24 @@ stages:
         continueOnError: true
         condition: always()
 
-      - script: 'echo "did this run?"'
-        displayName: 'Pretend Deploy'
-        condition: and(succeeded(), in(variables['TriggeredReason'], 'Schedule', 'Manual'))
+      - powershell: |
+          Write-Host "Sleep...";
+          Start-Sleep -Seconds 30;
+          Write-Host "Done sleeping.";
+        displayName: 'Wait 30 seconds'
+ 
+      # - script: 'echo "did this run?"'
+      #   displayName: 'Pretend Deploy'
+      #   condition: and(succeeded(), in(variables['TriggeredReason'], 'Schedule', 'Manual'))
 
-      - task: benjhuser.tfs-extensions-build-tasks.trigger-build-task.TriggerBuild@3
-        displayName: 'Trigger build $(NextBuild)'
-        inputs:
-          buildDefinition: '$(NextBuild)'
-          queueBuildForUserThatTriggeredBuild: true
-          buildParameters: 'TriggeringBuildReason: $(TriggeredReason), TriggeredBy: Triggered_by_$(Build.DefinitionName)/$(Build.BuildNumber)'
-          password: '$(ExecutePipelinesPersonalAccessToken)'
-          enableBuildInQueueCondition: true
-          blockingBuildsList: '$(NextBuild)'
-        continueOnError: true
-        condition: and(succeededOrFailed(), ne(variables['TriggeredReason'], 'Manual'), ne(variables['NextBuild'], ''), ne(variables['ExecutePipelinesPersonalAccessToken'], ''))
+      # - task: benjhuser.tfs-extensions-build-tasks.trigger-build-task.TriggerBuild@3
+      #   displayName: 'Trigger build $(NextBuild)'
+      #   inputs:
+      #     buildDefinition: '$(NextBuild)'
+      #     queueBuildForUserThatTriggeredBuild: true
+      #     buildParameters: 'TriggeringBuildReason: $(TriggeredReason), TriggeredBy: Triggered_by_$(Build.DefinitionName)/$(Build.BuildNumber)'
+      #     password: '$(ExecutePipelinesPersonalAccessToken)'
+      #     enableBuildInQueueCondition: true
+      #     blockingBuildsList: '$(NextBuild)'
+      #   continueOnError: true
+      #   condition: and(succeededOrFailed(), ne(variables['TriggeredReason'], 'Manual'), ne(variables['NextBuild'], ''), ne(variables['ExecutePipelinesPersonalAccessToken'], ''))
