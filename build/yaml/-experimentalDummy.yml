@@ -1,3 +1,6 @@
+# "name" here defines the build number format. Build number is accessed via $(Build.BuildNumber)
+name: $(Date:yyyyMMdd).$(Build.BuildId)
+
 pool:
   vmImage: $[ coalesce( variables['VMImage'], 'windows-2019' ) ] # or 'windows-latest' or 'vs2017-win2016'
 
