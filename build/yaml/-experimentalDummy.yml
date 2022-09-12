@@ -14,7 +14,7 @@ stages:
 - stage: Stage
   jobs:
   - deployment: Job
-    # environment: Exclusive_locks
+    environment: Exclusive_locks
     strategy:
       runOnce:
         deploy:
