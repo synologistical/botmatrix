@@ -35,14 +35,14 @@ namespace Microsoft.Bot.Connector.Streaming.Transport
             _pipeName = pipeName;
         }
 
-        public override async Task ConnectAsync(Action<bool> connectionStatusChanged = null, CancellationToken cancellationToken = default)
+        public override async Task ConnectAsync(CancellationToken cancellationToken = default)
         {
             Log.NamedPipeOpened(Logger);
 
             try
             {
                 await RetryToSucceedAsync(CreateNamedPipeServerAsync, cancellationToken).ConfigureAwait(false);
-                connectionStatusChanged?.Invoke(true);
+                IsConnected = true;
                 await ProcessAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
@@ -52,18 +52,18 @@ namespace Microsoft.Bot.Connector.Streaming.Transport
             finally
             {
                 Log.NamedPipeClosed(Logger);
-                connectionStatusChanged?.Invoke(false);
+                IsConnected = false;
             }
         }
 
-        public override async Task ConnectAsync(string url, Action<bool> connectionStatusChanged = null, IDictionary<string, string> requestHeaders = null, CancellationToken cancellationToken = default)
+        public override async Task ConnectAsync(string url, IDictionary<string, string> requestHeaders = null, CancellationToken cancellationToken = default)
         {
             Log.NamedPipeOpened(Logger);
 
             try
             {
                 await RetryToSucceedAsync(CreateNamedPipeClientAsync, cancellationToken).ConfigureAwait(false);
-                connectionStatusChanged?.Invoke(true);
+                IsConnected = true;
                 await ProcessAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
@@ -72,7 +72,7 @@ namespace Microsoft.Bot.Connector.Streaming.Transport
             }
             finally
             {
-                connectionStatusChanged?.Invoke(false);
+                IsConnected = false;
                 Log.NamedPipeClosed(Logger);
             }
         }

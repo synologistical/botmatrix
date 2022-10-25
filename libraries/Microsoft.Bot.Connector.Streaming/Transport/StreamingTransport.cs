@@ -24,11 +24,13 @@ namespace Microsoft.Bot.Connector.Streaming.Transport
             Logger = logger ?? NullLogger.Instance;
         }
 
+        public bool IsConnected { get; set; } = false;
+
         protected ILogger Logger { get; }
 
-        public abstract Task ConnectAsync(Action<bool> connectionStatusChanged = null, CancellationToken cancellationToken = default);
+        public abstract Task ConnectAsync(CancellationToken cancellationToken = default);
 
-        public abstract Task ConnectAsync(string url, Action<bool> connectionStatusChanged = null, IDictionary<string, string> requestHeaders = null, CancellationToken cancellationToken = default);
+        public abstract Task ConnectAsync(string url, IDictionary<string, string> requestHeaders = null, CancellationToken cancellationToken = default);
 
         /// <inheritdoc />
         public void Dispose()

@@ -85,7 +85,7 @@ namespace Microsoft.Bot.Connector.Streaming.Application
         public async Task ConnectAsync(IDictionary<string, string> requestHeaders, CancellationToken cancellationToken)
         {
             await ConnectImplAsync(
-                    connectFunc: (transport, connectionStatusChanged) => transport.ConnectAsync(_url, connectionStatusChanged, requestHeaders, cancellationToken),
+                    connectFunc: transport => transport.ConnectAsync(_url, requestHeaders, cancellationToken),
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -137,7 +137,7 @@ namespace Microsoft.Bot.Connector.Streaming.Application
         internal async Task ConnectInternalAsync(CancellationToken cancellationToken)
         {
             await ConnectImplAsync(
-                    connectFunc: (transport, connectionStatusChanged) => transport.ConnectAsync(connectionStatusChanged, cancellationToken),
+                    connectFunc: transport => transport.ConnectAsync(cancellationToken),
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -182,7 +182,7 @@ namespace Microsoft.Bot.Connector.Streaming.Application
             return response != null && response.StatusCode >= 200 && response.StatusCode <= 299;
         }
 
-        private async Task ConnectImplAsync(Func<StreamingTransport, Action<bool>, Task> connectFunc, CancellationToken cancellationToken)
+        private async Task ConnectImplAsync(Func<StreamingTransport, Task> connectFunc, CancellationToken cancellationToken)
         {
             CheckDisposed();
 
@@ -210,7 +210,7 @@ namespace Microsoft.Bot.Connector.Streaming.Application
                 _disconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
                 // Start transport and application
-                var transportTask = connectFunc(_transport, connect => IsConnected = connect);
+                var transportTask = connectFunc(_transport);
                 var applicationTask = _application.ListenAsync(_disconnectCts.Token);
                 var combinedTask = Task.WhenAll(transportTask, applicationTask);
 
