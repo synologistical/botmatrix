@@ -20,6 +20,50 @@ namespace Microsoft.Bot.Builder.Teams
     public class TeamsActivityHandler : ActivityHandler
     {
         /// <summary>
+        /// Called by the adapter (for example, a <see cref="BotFrameworkAdapter"/>)
+        /// at runtime in order to process an inbound <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="turnContext">The context object for this turn.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects
+        /// or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <remarks>
+        /// This method calls other methods in this class based on the type of the activity to
+        /// process, which allows a derived class to provide type-specific logic in a controlled way.
+        ///
+        /// In a derived class, override this method to add logic that applies to all activity types.
+        /// Add logic to apply before the type-specific logic before the call to the base class
+        /// <see cref="OnTurnAsync(ITurnContext, CancellationToken)"/> method.
+        /// Add logic to apply after the type-specific logic after the call to the base class
+        /// <see cref="OnTurnAsync(ITurnContext, CancellationToken)"/> method.
+        /// </remarks>
+        /// <seealso cref="OnTeamsMessageUpdateActivityAsync(ITurnContext{IMessageUpdateActivity}, CancellationToken)"/>
+        /// <seealso cref="OnTeamsMessageDeleteActivityAsync(ITurnContext{IMessageDeleteActivity}, CancellationToken)"/>
+        /// <seealso cref="Activity.Type"/>
+        public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (turnContext != null && turnContext.Activity != null && turnContext.Activity.Type != null)
+            {
+                switch (turnContext.Activity.Type)
+                {
+                    case "messageUpdate":
+                        await OnTeamsMessageUpdateActivityAsync(new DelegatingTurnContext<IMessageUpdateActivity>(turnContext), cancellationToken).ConfigureAwait(false);
+                        break;
+    
+                    case "messageDelete":
+                        await OnTeamsMessageDeleteActivityAsync(new DelegatingTurnContext<IMessageDeleteActivity>(turnContext), cancellationToken).ConfigureAwait(false);
+                        break;
+
+                    default:
+                        await OnTurnAsync(turnContext, cancellationToken).ConfigureAwait(false);
+                        break;
+                }
+            }
+
+            await OnTurnAsync(turnContext, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Invoked when an invoke activity is received from the connector.
         /// Invoke activities can be used to communicate many different things.
         /// </summary>
@@ -821,6 +865,93 @@ namespace Microsoft.Bot.Builder.Teams
         /// or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         protected virtual Task OnTeamsReadReceiptAsync(ReadReceiptInfo readReceiptInfo, ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Override this in a derived class to provide logic specific to
+        /// <see cref="ActivityTypes.MessageUpdate"/> activities, such as the conversational logic.
+        /// </summary>
+        /// <param name="turnContext">A strongly-typed context object for this turn.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects
+        /// or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <remarks>
+        /// When the <see cref="OnTurnAsync(ITurnContext, CancellationToken)"/>
+        /// method receives a message activity, it calls this method.
+        /// </remarks>
+        /// <seealso cref="OnTurnAsync(ITurnContext, CancellationToken)"/>
+        protected virtual Task OnTeamsMessageUpdateActivityAsync(ITurnContext<IMessageUpdateActivity> turnContext, CancellationToken cancellationToken)
+        {
+            if (turnContext.Activity.ChannelData.eventType != null)
+            {
+                switch (turnContext.Activity.ChannelData.eventType)
+                {
+                    case "editMessage":
+                        return OnTeamsEditMessageActivityAsync(turnContext, cancellationToken);
+
+                    case "undeleteMessage":
+                        return OnTeamsUndeleteMessageActivityAsync(turnContext, cancellationToken);
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Invoked when an edit message activity is received from the user.
+        /// <see cref="ActivityTypes.MessageUpdate"/> activities, such as the conversational logic.
+        /// </summary>
+        /// <param name="turnContext">A strongly-typed context object for this turn.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects
+        /// or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        protected virtual Task OnTeamsEditMessageActivityAsync(ITurnContext<IMessageUpdateActivity> turnContext, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Invoked when an undo delete message activity is received from the user.
+        /// <see cref="ActivityTypes.MessageUpdate"/> activities, such as the conversational logic.
+        /// </summary>
+        /// <param name="turnContext">A strongly-typed context object for this turn.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects
+        /// or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        protected virtual Task OnTeamsUndeleteMessageActivityAsync(ITurnContext<IMessageUpdateActivity> turnContext, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Override this in a derived class to provide logic specific to
+        /// <see cref="ActivityTypes.MessageDelete"/> activities, such as the conversational logic.
+        /// </summary>
+        /// <param name="turnContext">A strongly-typed context object for this turn.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects
+        /// or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <remarks>
+        /// When the <see cref="OnTurnAsync(ITurnContext, CancellationToken)"/>
+        /// method receives a message activity, it calls this method.
+        /// </remarks>
+        /// <seealso cref="OnTurnAsync(ITurnContext, CancellationToken)"/>
+        protected virtual Task OnTeamsMessageDeleteActivityAsync(ITurnContext<IMessageDeleteActivity> turnContext, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Invoked when an soft delete message activity is received from the user.
+        /// <see cref="ActivityTypes.MessageDelete"/> activities, such as the conversational logic.
+        /// </summary>
+        /// <param name="turnContext">A strongly-typed context object for this turn.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects
+        /// or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        protected virtual Task OnTeamsSoftDeleteMessageActivityAsync(ITurnContext<IMessageDeleteActivity> turnContext, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }
