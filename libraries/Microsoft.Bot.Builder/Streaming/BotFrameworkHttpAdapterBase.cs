@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -133,7 +134,7 @@ namespace Microsoft.Bot.Builder.Streaming
             // If a conversation has moved from one connection to another for the same Channel or Skill and
             // hasn't been forgotten by the previous StreamingRequestHandler. The last requestHandler
             // the conversation has been associated with should always be the active connection.
-            var requestHandler = RequestHandlers.Where(
+            var requestHandler = RequestHandlers.ToImmutableList().Where(
                 h => h.ServiceUrl == activity.ServiceUrl
                     && h.Audience == audience
                     && h.HasConversation(activity.Conversation.Id))
